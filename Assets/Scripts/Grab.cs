@@ -4,48 +4,65 @@ using UnityEngine;
 
 public class Grab : MonoBehaviour
 {
-    GameObject selectedObject;
-    bool grab;
-    // Start is called before the first frame update
-    void Start()
+    Transform selected;
+
+    GameObject selectedActive;
+
+    [SerializeField]
+    Camera cam;
+
+    Vector3 colliderOffset;
+
+    private void Start()
     {
         
     }
-
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        if (Input.GetMouseButtonUp(0))
+        if (Input.GetMouseButton(0))
         {
-            Vector3 pos = Input.mousePosition;
-
-            Ray rayo = Camera.main.ScreenPointToRay(pos);
+            Ray ray;
             RaycastHit hitInfo;
-
-            if(Physics.Raycast(rayo, out hitInfo))
+            ray = cam.ScreenPointToRay(Input.mousePosition);
+            
+            if (Physics.Raycast(ray.origin, ray.direction, out hitInfo))
             {
-                if(hitInfo.collider.gameObject.tag == "Cubo")
+                if(hitInfo.collider.CompareTag ("Cubo"))
                 {
-                    Debug.Log(hitInfo.collider.gameObject.name);
-                    selectedObject = hitInfo.collider.gameObject;
-                    grab = true;
+                    GameObject cube = hitInfo.collider.gameObject;
+                    CubePosition posicionCubo;
+                    posicionCubo = hitInfo.collider.GetComponent<CubePosition>();
+                    selected = hitInfo.collider.GetComponent<Transform>();
+                    var cubeposition = selected.position;
+                    //selectedActive = hitInfo.collider.gameObject;
+                    cube.SetActive(false);
+                    //selectedActive.SetActive(false);
+
+                    if(selectedActive != null || cube != null)
+                    {
+                        if (Physics.Raycast(ray.origin, ray.direction, out hitInfo))
+                        {
+                            colliderOffset = new Vector3(0f, cube.GetComponent<Transform>().localScale.y / 2, 0f);
+                            var temporalPos = colliderOffset;
+                            cube.SetActive(true);
+                            //selectedActive.SetActive(true);
+                            cube.GetComponent<Transform>().position = hitInfo.point + temporalPos;
+                        }
+                        else
+                        {
+                            cube.SetActive(true);
+                            if (Physics.Raycast(ray.origin, ray.direction, out hitInfo))
+                            {
+                                colliderOffset = new Vector3(0f, cube.GetComponent<Transform>().localScale.y / 2, 0f);
+                                var temporalPos = colliderOffset;
+                                cube.SetActive(true);
+                                //selectedActive.SetActive(true);
+                                cube.GetComponent<Transform>().position = posicionCubo.GetComponent<Transform>().position;
+                            }
+                        }
+                    }
                 }
             }
-
-            if (grab)
-            {
-                selectedObject.transform.position = pos;
-            }
-
-            if (Input.GetMouseButtonUp(0))
-            {
-                grab = false;
-            }
-        }
-
-        Vector3 mousePos()
-        {
-            return Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 10));
         }
     }
 }
