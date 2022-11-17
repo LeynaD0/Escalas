@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Lata
   - Cubo
+  - Mover
   layers:
   - Default
   - TransparentFX

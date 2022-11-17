@@ -19,7 +19,7 @@ public class Grab : MonoBehaviour
     }
     private void Update()
     {
-        if (Input.GetMouseButton(0))
+        if (Input.touchCount >= 1 && Input.GetTouch(0).phase == TouchPhase.Ended || Input.GetMouseButton(0))
         {
             Ray ray;
             RaycastHit hitInfo;
@@ -30,8 +30,6 @@ public class Grab : MonoBehaviour
                 if(hitInfo.collider.CompareTag ("Cubo"))
                 {
                     GameObject cube = hitInfo.collider.gameObject;
-                    CubePosition posicionCubo;
-                    posicionCubo = hitInfo.collider.GetComponent<CubePosition>();
                     selected = hitInfo.collider.GetComponent<Transform>();
                     var cubeposition = selected.position;
                     //selectedActive = hitInfo.collider.gameObject;
@@ -57,7 +55,7 @@ public class Grab : MonoBehaviour
                                 var temporalPos = colliderOffset;
                                 cube.SetActive(true);
                                 //selectedActive.SetActive(true);
-                                cube.GetComponent<Transform>().position = posicionCubo.GetComponent<Transform>().position;
+                                cube.GetComponent<Transform>().position = cube.GetComponent<Transform>().position;
                             }
                         }
                     }

@@ -3,18 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class CubePosition : MonoBehaviour
-{   
-    [SerializeField]
-    Transform cube;
+{
+    public bool activado;
     // Start is called before the first frame update
     void Start()
     {
-        
+        activado = false;
     }
 
     // Update is called once per frame
     void Update()
     {
-        cube = cube.gameObject.GetComponent<Transform>();
+        
     }
 }
