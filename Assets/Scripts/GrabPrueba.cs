@@ -4,80 +4,66 @@ using UnityEngine;
 using TMPro;
 
 public class GrabPrueba : MonoBehaviour
-{
-    [SerializeField]
-    TextMeshProUGUI textoBoton;
-    public enum EstadoSelector
+{ 
+    public enum EstadosSelector
     {
         EnEspera,
         SeleccionObjetoMover,
         SeleccionObjetoRotar,
+        SeleccionObjetoEscalar,
+        SeleccionObjetoCrear,
         Mover,
         Escalar,
         Rotar,
-        Soltar
+        Soltar,
+        EsperaTrasCrear
     }
 
     [SerializeField]
-    EstadoSelector estadoActual = EstadoSelector.EnEspera;
-    public GameObject cubo;
-    void Start()
-    {
-        textoBoton.text = "En espera";
-    }
+    EstadosSelector estadoActual = EstadosSelector.EnEspera;
+    public GameObject objetoSeleccionado;
+    Vector2 mousePos;
+    [SerializeField]
+    GameObject buttomsCreateMode, buttoms;
 
+    private void Start()
+    {
+        buttomsCreateMode.SetActive(false);
+    }
     // Update is called once per frame
     void Update()
     {
         switch (estadoActual)
         {
-            case EstadoSelector.EnEspera:
-                estadoActual = EstadoSelector.SeleccionObjetoMover;
+            case EstadosSelector.EnEspera:
+                estadoActual = EstadosSelector.EnEspera;
                 break;
-            case EstadoSelector.SeleccionObjetoMover:
-                BotonMover();
+            case EstadosSelector.SeleccionObjetoMover:
+                Select();
                 break;
-            case EstadoSelector.Mover:
-                BotonMover();
+            case EstadosSelector.SeleccionObjetoRotar:
+                Select();
                 break;
-            case EstadoSelector.Soltar:
-                Realese();
+            case EstadosSelector.SeleccionObjetoEscalar:
+                Select();
                 break;
-        }
-
-        /*if (cubo == null)
-        {
-            Select();
-        }
-
-        else
-        {
-            if (Input.GetMouseButtonUp(0))
-            {
-                Realese();
-            }
-            else
-            {
+            case EstadosSelector.Mover:
                 Move();
-            }
-        }*/
-    }
-
-    void Move()
-    {
-        Ray rayo = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        cubo.SetActive(false);
-        if(Physics.Raycast(rayo, out hit))
-        {
-            cubo.transform.position = hit.point + Vector3.up * cubo.transform.localScale.y / 2;
+                break;
+            case EstadosSelector.Soltar:
+                Soltar();
+                break;
+            case EstadosSelector.Rotar:
+                Rotar();
+                break;
+            case EstadosSelector.Escalar:
+                Escalar();
+                break;
+            case EstadosSelector.EsperaTrasCrear:
+                estadoActual = EstadosSelector.Mover;
+                break;
         }
-        cubo.SetActive(true);
 
-        if (Input.GetMouseButtonUp(0))
-        {
-            estadoActual = EstadoSelector.Soltar;
-        }
     }
 
     void Select()
@@ -89,30 +75,110 @@ public class GrabPrueba : MonoBehaviour
 
             if(Physics.Raycast(rayo, out hit))
             {
-                if (hit.collider.tag.Equals("Mover"))
+                    GameObject objectHit = hit.transform.gameObject;
+                if (objectHit.CompareTag("Mover"))
                 {
-                    cubo = hit.collider.gameObject;
-                    if(estadoActual == EstadoSelector.SeleccionObjetoMover)
-                    {
-                        estadoActual = EstadoSelector.Mover;
-                    }
+                    objetoSeleccionado = objectHit;
+                    ObjetoSeleccionadoCambiarEstado();
                 }
             }
         }
     }
-
-    void Realese()
+    void ObjetoSeleccionadoCambiarEstado()
     {
-        cubo = null;
-        estadoActual = EstadoSelector.EnEspera;
-    }
-
-    public void BotonMover()
-    {
-       if(estadoActual == EstadoSelector.SeleccionObjetoMover)
+        switch (estadoActual)
         {
-            textoBoton.text = "Selección objeto mover";
-            Select();
+            case EstadosSelector.SeleccionObjetoMover:
+                estadoActual = EstadosSelector.Mover;
+                break;
+            case EstadosSelector.SeleccionObjetoRotar:
+                objetoSeleccionado.GetComponent<Rigidbody>().isKinematic = true;
+                mousePos = Input.mousePosition;
+                estadoActual = EstadosSelector.Rotar;
+                break;
+            case EstadosSelector.SeleccionObjetoEscalar:
+                estadoActual = EstadosSelector.Escalar;
+                break;
+            case EstadosSelector.SeleccionObjetoCrear:
+                estadoActual = EstadosSelector.EsperaTrasCrear;
+                break;
         }
     }
+
+    public void CrearObjecto(GameObject objectoACrear)
+    {
+        objetoSeleccionado = Instantiate(objectoACrear, Vector3.zero, Quaternion.identity);
+        objetoSeleccionado.GetComponent<MeshRenderer>().material.color = Random.ColorHSV();
+        estadoActual = EstadosSelector.EsperaTrasCrear;
+    }
+
+    void Move()
+    {
+        Ray rayo = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        objetoSeleccionado.SetActive(false);
+        if (Physics.Raycast(rayo, out hit))
+        {
+            objetoSeleccionado.transform.position = hit.point + ((Vector3.up * objetoSeleccionado.transform.localScale.y) / 2);
+        }
+        objetoSeleccionado.SetActive(true);
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            estadoActual = EstadosSelector.Soltar;
+        }
+    }
+
+    void Rotar()
+    {
+        Vector2 mouseDelta = mousePos - (Vector2)Input.mousePosition;
+        objetoSeleccionado.transform.Rotate(mouseDelta.y, mouseDelta.x, 0f);
+
+        mousePos = Input.mousePosition;
+        if (Input.GetMouseButtonUp(0))
+        {
+            objetoSeleccionado.GetComponent<Rigidbody>().isKinematic = false;
+            estadoActual = EstadosSelector.EnEspera;
+        }
+    }
+
+    void Escalar()
+    {
+        objetoSeleccionado.transform.localScale += Vector3.one * Input.mouseScrollDelta.y;
+        if (Input.GetMouseButtonUp(0))
+        {
+            estadoActual = EstadosSelector.EnEspera;
+        }
+    }
+    void Soltar()
+    {
+        objetoSeleccionado = null;
+        estadoActual = EstadosSelector.EnEspera;
+    }
+    public void EnterSelectMove()
+    {
+        estadoActual = EstadosSelector.SeleccionObjetoMover;
+    }
+    public void EnterSelectRotate()
+    {
+        estadoActual = EstadosSelector.SeleccionObjetoRotar;
+    }
+    public void EnterSelectEscalar()
+    {
+        estadoActual = EstadosSelector.SeleccionObjetoEscalar;
+    }
+
+    public void EnterSelectCreate()
+    {
+        estadoActual = EstadosSelector.SeleccionObjetoCrear;
+        buttomsCreateMode.SetActive(true);
+        buttoms.SetActive(false);
+    }
+
+    public void OutSelectCreate()
+    {
+        buttomsCreateMode.SetActive(false);
+        buttoms.SetActive(true);
+    }
+
 }
